@@ -1,6 +1,8 @@
 import productModel from "../model/product.js";
 import mongoose from "mongoose";
 import productDetailsModel from "../model/productDetails.js"
+import userModel from "../model/user.js";
+import cartModel from "../model/cart.js";
 
 
 class product {
@@ -94,9 +96,6 @@ class product {
                         mrp: 1,
                     }
                 },
-                // {
-                //     $match: { $and: filter }
-                // },
             ]).collation({ locale: "en" })
 
             console.log('productData :>> ', productData);
@@ -141,15 +140,67 @@ class product {
     }
 
     static deleteProduct = async (req, res) => {
-        const product = await productModel.findOne({ isDeleted: false, _id: mongoose.Types.ObjectId(req.params.productId) });
-        console.log('product :>> ', product);
+        try {
+            const product = await productModel.findOne({ isDeleted: false, _id: mongoose.Types.ObjectId(req.params.productId) });
+            console.log('product :>> ', product);
 
-        product.isDeleted = true;
+            product.isDeleted = true;
 
-        const productData = await product.save();
-        console.log('productData :>> ', productData);
+            const productData = await product.save();
+            console.log('productData :>> ', productData);
 
-        return res.status(200).send("data deleted successfully");
+            return res.status(200).send("data deleted successfully");
+        } catch (error) {
+            console.log('error :>> ', error);
+        }
+    }
+
+    static addToCart = async (req, res) => {
+        try {
+            const user = await userModel.findOne({ isDeleted: false, _id: mongoose.Types.ObjectId(req.params.userId) });
+            if (!user) {
+                return await res.status(402).send("user not found");
+            }
+            console.log('user :>> ', user);
+
+            // const availableCart = await cartModel.findOne({ isDeleted: false, userId: mongoose.Types.ObjectId(req.params.userId) });
+            // if (availableCart) {
+            //     console.log('availableCart :>> ', availableCart.productId);
+
+            // }
+
+            if (req.query.productId) {
+                const product = await productModel.findOne({ isDeleted: false, _id: mongoose.Types.ObjectId(req.query.productId) });
+                if (!product) {
+                    return await res.status(402).send("product not found");
+                }
+                console.log('product :>> ', product);
+                console.log('parseInt(product.price) :>> ', parseInt(product.price));
+                let amount = 0;
+                amount = amount + parseInt(product.price);
+
+
+                console.log('req.query.productId :>> ', req.query.productId);
+
+
+
+                const cart = new cartModel({
+                    userId: req.params.userId,
+                    productId: product._id ? cart.productId.push(`${req.query.productId}`) : [req.query.productId],
+                    amount: amount
+                });
+
+                console.log('productId :>> ', cart);
+
+                const cartData = await cart.save();
+                console.log('cartData :>> ', cartData);
+
+            }
+
+            return res.status(200).send("add to cart successfully");
+        } catch (error) {
+            console.log('error :>> ', error);
+        }
     }
 
 }

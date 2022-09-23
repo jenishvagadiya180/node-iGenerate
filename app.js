@@ -1,8 +1,10 @@
 import express from 'express'
 import dotenv from 'dotenv';
-import router from './route/product.js'
+import product from './route/product.js'
+import user from './route/user.js'
 import connectDatabase from './database/connectDatabase.js'
 import bodyParser from 'body-parser';
+
 
 dotenv.config();
 const app = express();
@@ -20,7 +22,8 @@ app.use(
     })
 );
 
-app.use('/product', router)
+app.use('/user', user)
+app.use('/product', product)
 
 app.listen(port, () => {
     console.log(`Server listening at http://localhost:${port}`)

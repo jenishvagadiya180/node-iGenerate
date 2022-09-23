@@ -17,11 +17,15 @@ router.get('/list', product.productList)
 router.get('/list/specifiedId', product.productListInSpecifiedId)
 
 router.put('/update/:productId',
-    param('productId').isMongoId().withMessage(message.INVALID_PRODUCT_ID)
+    param('productId').exists().withMessage(message.PRODUCT_ID_REQUIRED).isMongoId().withMessage(message.INVALID_PRODUCT_ID)
     , product.updateProduct)
 
 router.delete('/delete/:productId',
-    param('productId').isMongoId().withMessage(message.INVALID_PRODUCT_ID)
+    param('productId').exists().withMessage(message.PRODUCT_ID_REQUIRED).isMongoId().withMessage(message.INVALID_PRODUCT_ID)
     , product.deleteProduct)
+
+router.post('/addToCart/:userId',
+    param('userId').exists().withMessage(message.USER_ID_REQUIRED).isMongoId().withMessage(message.INVALID_PRODUCT_ID)
+    , product.addToCart)
 
 export default router
