@@ -120,7 +120,6 @@ class product {
             if (!product) {
                 return await res.status(402).send("product not found");
             }
-
             console.log('product :>> ', product);
 
             product.name = req.body.name
@@ -154,8 +153,7 @@ class product {
 
     static addToCart = async (req, res) => {
         try {
-            let userId = req.params.userId;
-            let productId = req.query.productId
+            let { userId, productId } = req.query;
             const user = await userModel.findOne({ isDeleted: false, _id: mongoose.Types.ObjectId(userId) });
             if (!user) {
                 return await res.status(402).send("user not found");
@@ -200,7 +198,7 @@ class product {
 
     static placeOrder = async (req, res) => {
         try {
-            let cartId = req.params.cartId;
+            let cartId = req.query.cartId;
             const checkCart = await cartModel.findOne({ isDeleted: false, isCheckout: false, _id: mongoose.Types.ObjectId(cartId) });
             if (!checkCart) {
                 return await res.status(402).send("cart not found");
@@ -215,8 +213,93 @@ class product {
         } catch (error) {
             console.log('error :>> ', error);
         }
-
     }
+
+    static removeProductFromCart = async (req, res) => {
+        try {
+            let userId = req.query.userId;
+            let productId = req.query.productId
+            const user = await userModel.findOne({ isDeleted: false, _id: mongoose.Types.ObjectId(userId) });
+            if (!user) {
+                return await res.status(402).send("user not found");
+            }
+            console.log('user :>> ', user);
+
+            const availableCart = await cartModel.findOne({ isDeleted: false, userId: mongoose.Types.ObjectId(userId), isCheckout: false });
+            if (availableCart) {
+                const product = await productModel.findOne({ isDeleted: false, _id: mongoose.Types.ObjectId(productId) });
+                console.log('product :>> ', product);
+                if (!product) {
+                    return await res.status(402).send("product not found");
+                }
+                console.log('availableCart :>> ', availableCart);
+                availableCart.amount -= product.price;
+
+                let productIndex = availableCart.productId.indexOf(`${productId}`)
+                console.log('productIndex :>> ', productIndex);
+
+                if (productIndex == -1) {
+                    return await res.status(402).send("product not found in cart");
+                }
+                availableCart.productId.splice(productIndex, 1);
+                console.log('availableCart :>> ', availableCart);
+            }
+            return res.status(200).send("product removed from cart successfully")
+        } catch (error) {
+            console.log('error :>> ', error);
+        }
+    }
+
+    static viewCart = async (req, res) => {
+        try {
+            let { cartId } = req.query;
+            const checkCart = await cartModel.findOne({ isDeleted: false, isCheckout: false, _id: mongoose.Types.ObjectId(cartId) });
+            if (!checkCart) {
+                return await res.status(402).send("cart not found");
+            }
+            console.log('checkCart :>> ', checkCart);
+
+            const cartData = await cartModel.aggregate([
+                { $match: { _id: mongoose.Types.ObjectId(cartId) } },
+                {
+                    $lookup:
+                    {
+                        from: "products",
+                        let: { arr: checkCart.productId },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $in: ["$_id", "$$arr"]
+                                    }
+                                }
+                            }
+                        ],
+                        as: "products"
+                    }
+                },
+                {
+                    $project: {
+                        $map: {
+                            input: "$products",
+                            as: "products",
+                            in: {
+                                id: "$$products.products._id",
+                                count: $$products.products.count
+                            }
+                        }
+                    },
+                }
+            ]);
+
+            console.log('cartData :>> ', cartData);
+
+            return res.status(200).send({ cartData })
+        } catch (error) {
+            console.log('error :>> ', error);
+        }
+    }
+
 }
 
 export default product
