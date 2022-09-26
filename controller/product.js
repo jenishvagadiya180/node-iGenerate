@@ -69,8 +69,6 @@ class product {
                 ]
             }
 
-
-
             const productData = await productModel.aggregate([
                 {
                     $lookup: {
@@ -85,7 +83,6 @@ class product {
                 },
 
                 { $unwind: { path: "$productDetails", preserveNullAndEmptyArrays: true } },
-
 
                 {
                     $project: {
@@ -157,52 +154,69 @@ class product {
 
     static addToCart = async (req, res) => {
         try {
-            const user = await userModel.findOne({ isDeleted: false, _id: mongoose.Types.ObjectId(req.params.userId) });
+            let userId = req.params.userId;
+            let productId = req.query.productId
+            const user = await userModel.findOne({ isDeleted: false, _id: mongoose.Types.ObjectId(userId) });
             if (!user) {
                 return await res.status(402).send("user not found");
             }
             console.log('user :>> ', user);
 
-            // const availableCart = await cartModel.findOne({ isDeleted: false, userId: mongoose.Types.ObjectId(req.params.userId) });
-            // if (availableCart) {
-            //     console.log('availableCart :>> ', availableCart.productId);
-
-            // }
-
+            const availableCart = await cartModel.findOne({ isDeleted: false, userId: mongoose.Types.ObjectId(userId), isCheckout: false });
+            if (availableCart) {
+                const product = await productModel.findOne({ isDeleted: false, _id: mongoose.Types.ObjectId(productId) });
+                if (!product) {
+                    return await res.status(402).send("product not found");
+                }
+                console.log('availableCart :>> ', availableCart);
+                availableCart.productId.push(`${productId}`)
+                availableCart.amount += product.price
+                const cartData = availableCart.save();
+                console.log('cartData :>> ', cartData);
+                return res.status(200).send("add to cart successfully");
+            }
             if (req.query.productId) {
-                const product = await productModel.findOne({ isDeleted: false, _id: mongoose.Types.ObjectId(req.query.productId) });
+                const product = await productModel.findOne({ isDeleted: false, _id: mongoose.Types.ObjectId(productId) });
                 if (!product) {
                     return await res.status(402).send("product not found");
                 }
                 console.log('product :>> ', product);
-                console.log('parseInt(product.price) :>> ', parseInt(product.price));
-                let amount = 0;
-                amount = amount + parseInt(product.price);
-
-
-                console.log('req.query.productId :>> ', req.query.productId);
-
-
 
                 const cart = new cartModel({
-                    userId: req.params.userId,
-                    productId: product._id ? cart.productId.push(`${req.query.productId}`) : [req.query.productId],
-                    amount: amount
+                    userId: userId,
+                    productId: [productId],
+                    amount: parseInt(product.price)
                 });
 
-                console.log('productId :>> ', cart);
-
+                console.log('cart :>> ', cart);
                 const cartData = await cart.save();
                 console.log('cartData :>> ', cartData);
-
             }
-
             return res.status(200).send("add to cart successfully");
         } catch (error) {
             console.log('error :>> ', error);
         }
     }
 
+    static placeOrder = async (req, res) => {
+        try {
+            let cartId = req.params.cartId;
+            const checkCart = await cartModel.findOne({ isDeleted: false, isCheckout: false, _id: mongoose.Types.ObjectId(cartId) });
+            if (!checkCart) {
+                return await res.status(402).send("cart not found");
+            }
+            console.log('checkCart :>> ', checkCart);
+
+            checkCart.isCheckout = true;
+            const cartData = await checkCart.save();
+            console.log('cartData :>> ', cartData);
+            return res.status(200).send("order placed successfully")
+
+        } catch (error) {
+            console.log('error :>> ', error);
+        }
+
+    }
 }
 
 export default product

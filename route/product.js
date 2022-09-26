@@ -28,4 +28,8 @@ router.post('/addToCart/:userId',
     param('userId').exists().withMessage(message.USER_ID_REQUIRED).isMongoId().withMessage(message.INVALID_PRODUCT_ID)
     , product.addToCart)
 
+router.post('/order/:cartId',
+    param('cartId').exists().withMessage(message.CART_ID_REQUIRED).isMongoId().withMessage(message.INVALID_CART_ID)
+    , product.placeOrder)
+
 export default router

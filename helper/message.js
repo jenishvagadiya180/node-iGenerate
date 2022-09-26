@@ -17,7 +17,9 @@ const message = {
     LOGIN_SUCCESSFUL: "login successful",
     PRODUCT_ID_REQUIRED: "productId required",
     USER_ID_REQUIRED: "userId required",
-    INVALID_USER_ID: "invalid userId"
+    INVALID_USER_ID: "invalid userId",
+    CART_ID_REQUIRED: "cartId is required",
+    INVALID_CART_ID: "invalid cartId"
 }
 
 
