@@ -27,7 +27,7 @@ const productSchema = new mongoose.Schema({
     updatedAt: Number,
 
 },
-    { timestamps: true });
+    { timestamps: true, versionKey: false });
 
 
 const productModel = mongoose.model("product", productSchema);

@@ -262,34 +262,60 @@ class product {
             const cartData = await cartModel.aggregate([
                 { $match: { _id: mongoose.Types.ObjectId(cartId) } },
                 {
-                    $lookup:
-                    {
-                        from: "products",
-                        let: { arr: checkCart.productId },
-                        pipeline: [
-                            {
-                                $match: {
-                                    $expr: {
-                                        $in: ["$_id", "$$arr"]
-                                    }
-                                }
-                            }
-                        ],
-                        as: "products"
-                    }
-                },
-                {
-                    $project: {
-                        $map: {
-                            input: "$products",
-                            as: "products",
-                            in: {
-                                id: "$$products.products._id",
-                                count: $$products.products.count
+                    $addFields: {
+                        productId: {
+                            $map: {
+                                input: "$productId",
+                                as: "p",
+                                in: {
+                                    k: "$$p",
+                                    v: {
+                                        $size: {
+                                            $filter: {
+                                                input: "$productId",
+                                                cond: { $eq: ["$$this", "$$p"] }
+                                            }
+                                        }
+                                    },
+                                },
                             }
                         }
-                    },
-                }
+                    }
+                },
+
+                // {
+                //     $addFields: {
+                //         quantity: {
+                //             $cond: { if: { $eq: ["$products._id", "$productId.k"] }, then: { count: "$productId.v" }, else: { product: '$products' } }
+                //         }
+                //     }
+                // }
+                // {
+                //     $redact: {
+                //         $cond: [{
+                //             $eq: ["$productId.k", "$products._id"]
+                //         },
+                //             '$$KEEP',
+                //             '$$PRUNE'
+                //         ]
+                //     },
+                // }
+
+                // {
+                //     $project: {
+                //         productDetails: {
+                //             $map:
+                //             {
+                //                 input: "$products",
+                //                 as: "product",
+                //                 in: {
+                //                     "name": '$$product.name', "price": "$$product.price", "quantity": {}
+                //                 }
+                //             },
+                //         },
+                //         amount: 1
+                //     }
+                // }
             ]);
 
             console.log('cartData :>> ', cartData);

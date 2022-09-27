@@ -24,20 +24,12 @@ router.delete('/delete/:productId',
     param('productId').exists().withMessage(message.PRODUCT_ID_REQUIRED).isMongoId().withMessage(message.INVALID_PRODUCT_ID)
     , product.deleteProduct)
 
-router.post('/addToCart/',
-    param('userId').exists().withMessage(message.USER_ID_REQUIRED).isMongoId().withMessage(message.INVALID_PRODUCT_ID)
-    , product.addToCart)
+router.post('/addToCart/', product.addToCart)
 
-router.post('/removeFromCart/',
-    param('userId').exists().withMessage(message.USER_ID_REQUIRED).isMongoId().withMessage(message.INVALID_PRODUCT_ID)
-    , product.removeProductFromCart)
+router.post('/removeFromCart/', product.removeProductFromCart)
 
-router.post('/order',
-    param('cartId').exists().withMessage(message.CART_ID_REQUIRED).isMongoId().withMessage(message.INVALID_CART_ID)
-    , product.placeOrder)
+router.post('/order', product.placeOrder)
 
-router.get('/viewCart/',
-    param('cartId').exists().withMessage(message.CART_ID_REQUIRED).isMongoId().withMessage(message.INVALID_CART_ID)
-    , product.viewCart)
+router.get('/viewCart/', product.viewCart)
 
 export default router
